@@ -2,6 +2,9 @@
 
 export EMBODIED_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export REPO_PATH=$(dirname $(dirname "$EMBODIED_PATH"))
+# export RISE_REPO_ROOT=$(dirname $(dirname "$REPO_PATH"))
+# export OPENPI_VALUE_SRC="${RISE_REPO_ROOT}/policy_and_value/policy_offline_and_value/src"
+# export DYNAMICS_ROOT="${RISE_REPO_ROOT}/dynamics"
 export SRC_FILE="${EMBODIED_PATH}/train_embodied_agent.py"
 
 export MUJOCO_GL="egl"
@@ -11,6 +14,7 @@ export NVIDIA_DRIVER_CAPABILITIES="compute,utility,graphics"
 
 export CUDA_LAUNCH_BLOCKING=1
 export HYDRA_FULL_ERROR=1
+export PYTHONPATH="${REPO_PATH}:${PYTHONPATH}"
 
 if [ -z "$1" ]; then
     CONFIG_NAME="maniskill_ppo_openvlaoft"

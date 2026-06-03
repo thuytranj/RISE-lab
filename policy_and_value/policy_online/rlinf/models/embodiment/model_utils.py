@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-import torch
 import torch.nn.functional as F
 
 
@@ -24,16 +23,3 @@ def compute_logprobs_from_logits(logits, target):
     return logprobs
 
 
-def compute_entropy_from_logits(logits, epsilon=1e-10):
-    """
-    Compute entropy by logits.
-
-    Args:
-        logits: [B, vocab-size, seq-len]
-    Returns:
-        entropy: [B, seq-len]
-    """
-    all_probs = F.softmax(logits, dim=1)  # [B, vocab-size, seq-len]
-    all_log_probs = torch.log(all_probs + epsilon)
-    entropy = -torch.sum(all_probs * all_log_probs, dim=1)  # [B, seq-len]
-    return entropy

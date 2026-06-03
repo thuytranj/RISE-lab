@@ -21,24 +21,11 @@ import openpi_value.models.tokenizer as _tokenizer
 import pandas as pd
 import numpy as np
 import torch
-from typing import Union
 # Import PyTorch standard libraries for image processing
 import torchvision.transforms.functional as F_tv # For resizing (on PIL Images or Tensors)
 import torch.nn.functional as F_nn # For padding (on Tensors)
 
 
-# --- Helper function for type conversion (if needed) ---
-def convert_to_uint8(img: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
-    """Converts an image to uint8 if it is a float image."""
-    if isinstance(img, np.ndarray):
-        if np.issubdtype(img.dtype, np.floating):
-            img = (255 * img).astype(np.uint8)
-    elif isinstance(img, torch.Tensor):
-        if img.is_floating_point():
-            # Clamp tensor to [0, 1] before scaling, if necessary
-            img = torch.clamp(img, 0., 1.)
-            img = (255 * img).to(torch.uint8)
-    return img
 
 
 # --- Helper function for a single tensor (Internal use) ---
@@ -523,98 +510,9 @@ class RewardModel:
     
   
     
-    def get_metrics(self):
 
-        if not self.all_pred or not self.all_tgt:
-            return None
-        
-        return {
-            "predictions": self.all_pred,
-            "targets": self.all_tgt,
-            "mse": np.mean((np.array(self.all_pred) - np.array(self.all_tgt)) ** 2)
-        }
 
-def extract_view_tensors(video_path):
-    cap = cv2.VideoCapture(video_path)
-    
 
-    list_left, list_mid, list_right = [], [], []
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # 1. OpenCV defaults to BGR, convert to RGB
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # 2. Segment the image into width, width, and channel.
-        h, w, c = frame.shape
-        w_single = w // 3
-
-        img_l = frame[:, :w_single, :]
-        img_m = frame[:, w_single : 2*w_single, :]
-        img_r = frame[:, 2*w_single :, :]
-
-        list_left.append(img_l)
-        list_mid.append(img_m)
-        list_right.append(img_r)
-
-    cap.release()
-
-    # 3. Converts a list into a Tensor of (Time, Channel, Height, Width).
-    def list_to_tensor(frame_list):
-        # (T, H, W, C)
-        np_frames = np.stack(frame_list)
-        # convert to Tensor
-        tensor = torch.from_numpy(np_frames)
-        tensor = (tensor.float() / 127.5) - 1.0
-        # (T, H, W, C) -> (T, C, H, W)
-        return tensor.permute(0, 3, 1, 2)
-
-    return list_to_tensor(list_left), list_to_tensor(list_mid), list_to_tensor(list_right)
-
-def tensor_to_numpy_image(tensor):
-    """
-        Convert a (C, H, W) Tensor of [-1, 1] to a (H, W, C) BGR Numpy image of [0, 255].
-        For saving video using OpenCV.
-    """
-    # 1. [-1, 1] -> [0, 1]
-    img = (tensor.detach().cpu().permute(1, 2, 0).numpy() + 1.0) / 2.0
-    # 2. Mapped to [0, 255]
-    img = (img * 255).clip(0, 255).astype(np.uint8)
-    # 3. RGB -> BGR (OpenCV needs BGR)
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    return img
-
-def plot_reward_curve(rewards, frames_indices, target_height):
-    """
-        Plot curves using Matplotlib and convert them to OpenCV images.
-    """
-    fig = plt.figure(figsize=(6, 4), dpi=100)
-    plt.plot(frames_indices, rewards, color='red', linewidth=2, marker='o', markersize=4)
-    plt.title(f"Current Reward: {rewards[-1]:.4f}")
-    plt.xlabel("Frame")
-    plt.ylabel("Reward Value")
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.tight_layout()
-
-    # Convert a Matplotlib canvas to an RGB image array
-    fig.canvas.draw()
-    img_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8) # uv pip install matplotlib==3.7.0
-    img_plot = img_plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    plt.close(fig)
-
-    # RGB -> BGR
-    img_plot = cv2.cvtColor(img_plot, cv2.COLOR_RGB2BGR)
-    
-    # Resize to match video height
-    h, w, _ = img_plot.shape
-    scale = target_height / h
-    new_w = int(w * scale)
-    img_plot_resized = cv2.resize(img_plot, (new_w, target_height))
-    
-    return img_plot_resized
 
     
     

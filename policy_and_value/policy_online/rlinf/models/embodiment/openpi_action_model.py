@@ -1238,8 +1238,6 @@ class OpenPi0ForRLActionPrediction(PI0Pytorch):
             log_prob = torch.where(mask, torch.zeros_like(log_prob), log_prob)
         return log_prob
 
-    def preprocess_for_train(self, data):
-        return data
 
     def get_log_prob_value(
         self,

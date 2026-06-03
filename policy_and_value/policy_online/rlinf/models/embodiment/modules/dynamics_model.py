@@ -274,23 +274,4 @@ class DynamicsModel:
         
         return preds
     
-    def get_default_act_tokens(self, parquet_path) -> torch.Tensor:
-        """
-            Get the default action tokens
-
-            Args:
-
-                parquet_path: Parquet file path
-
-            Returns:
-
-                act_tokens: Action tokens, shape=(1, 25, 14)
-        """
-        act_tokens_index = [181 + i for i in range(25)]
-        data = pd.read_parquet(parquet_path)
-        action = np.stack([data['action'][i] for i in range(data['action'].shape[0])])
-        action_tokens_need = action[act_tokens_index].astype(np.float32)
-        action_tokens_need = torch.FloatTensor(action_tokens_need)
-        act_tokens = action_tokens_need.unsqueeze(0)
-        return act_tokens
 

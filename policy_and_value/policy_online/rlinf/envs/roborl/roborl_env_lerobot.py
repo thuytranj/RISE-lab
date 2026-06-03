@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import copy
-import os
 from typing import List, Optional, Union
 
 import gym
@@ -26,8 +25,6 @@ from dataclasses import replace
 import random
 from collections import deque
 
-from types import SimpleNamespace
-from openpi_value.models import model as _model
 from dataclasses import replace
 
 def to_tensor(

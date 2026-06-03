@@ -17,7 +17,7 @@ from typing import Any
 
 import numpy as np
 import torch
-from omegaconf import DictConfig, open_dict
+from omegaconf import DictConfig
 
 from rlinf.data.io_struct import EnvOutput
 from rlinf.envs.action_utils import prepare_actions

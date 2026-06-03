@@ -365,6 +365,7 @@ def get_lr_scheduler(
         return get_cosine_schedule_with_warmup(
             optimizer=optimizer,
             num_warmup_steps=num_warmup_steps,
+            min_lr_ratio=min_lr_ratio,
             num_training_steps=decay_steps,
             num_cycles=num_cycles,
         )

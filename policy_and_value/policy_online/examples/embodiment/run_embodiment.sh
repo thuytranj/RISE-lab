@@ -2,9 +2,11 @@
 
 export EMBODIED_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export REPO_PATH=$(dirname $(dirname "$EMBODIED_PATH"))
-# export RISE_REPO_ROOT=$(dirname $(dirname "$REPO_PATH"))
+export RISE_REPO_ROOT=$(dirname $(dirname "$REPO_PATH"))
 # export OPENPI_VALUE_SRC="${RISE_REPO_ROOT}/policy_and_value/policy_offline_and_value/src"
 # export DYNAMICS_ROOT="${RISE_REPO_ROOT}/dynamics"
+
+export PYTHONPATH="${RISE_REPO_ROOT}/dynamics/dynamics_model:${PYTHONPATH}"
 export SRC_FILE="${EMBODIED_PATH}/train_embodied_agent.py"
 
 export MUJOCO_GL="egl"

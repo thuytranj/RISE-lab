@@ -241,11 +241,13 @@ class OpenPi0ForRLActionPrediction(PI0Pytorch):
         # process input
         first_process = "prompt" in inputs.keys()
         # * What does first_process mean?
+        
         input_keys_if_exist = [
             "observation/image", "observation/wrist_image", "observation/state",
             "observation/image_top_head", "observation/image_hand_left", "observation/image_hand_right",
             "action_advantage"
         ]
+        
         if first_process:
             inputs.pop("prompt")
         else:
@@ -306,8 +308,19 @@ class OpenPi0ForRLActionPrediction(PI0Pytorch):
         # * Verified.
 
         if not first_process:
-            inputs["tokenized_prompt"] = obs["tokenized_prompt"]
-            inputs["tokenized_prompt_mask"] = obs["tokenized_prompt_mask"]
+            # Reuse the cached rollout prompt only when NOT advantage-conditioning. With
+            # conditioning ON the prompt was just re-tokenized with the real per-sample
+            # advantage; the cached one holds the generation-time pseudo value, so keep the
+            # fresh one.
+            if not self.config.with_advantage_condition:
+                inputs["tokenized_prompt"] = obs["tokenized_prompt"]
+                inputs["tokenized_prompt_mask"] = obs["tokenized_prompt_mask"]
+            else:
+                # Keep the fresh prompt; re-tokenization is on CPU, so match the cached device.
+                if torch.is_tensor(obs.get("tokenized_prompt", None)):
+                    _device = obs["tokenized_prompt"].device
+                    inputs["tokenized_prompt"] = inputs["tokenized_prompt"].to(_device)
+                    inputs["tokenized_prompt_mask"] = inputs["tokenized_prompt_mask"].to(_device)
         return inputs
 
     def output_transform(self, outputs):
@@ -328,7 +341,7 @@ class OpenPi0ForRLActionPrediction(PI0Pytorch):
 
         return outputs
 
-    # * if state from wm generation, use wm conditional action (policy inference) as ground-truth, also the reward
+    # * if state from wm generation, use policy inferenced action as ground-truth, also the wm-labeled reward
     # * if state from real-world data, use offline action as ground-truth, also the pre-labeled reward
 
     def forward(
@@ -361,7 +374,6 @@ class OpenPi0ForRLActionPrediction(PI0Pytorch):
         # *     observation['action_advantage'] is None, 
         # *     NO advantage-related info included in text prompt
         
-        # * with_advantage_condition = True
         
         observation = _model.Observation.from_dict(observation)
         if self.config.offline_rl:

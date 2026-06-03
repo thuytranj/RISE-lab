@@ -20,7 +20,7 @@ cd RISE/dynamics/dynamics_model
 
 ## Data Format
 
-The framework expects data in the LeRobot format. For optimal training performance, we strongly recommend pre-resizing videos to `[256, 192]` resolution.
+The framework expects data in the LeRobot format. For optimal training performance, we strongly recommend pre-resizing videos to `[256, 192]` resolution for each video. We use three views (1 head view + 2 wrist views) for both pretraining and task-specific finetuning.
 
 ### Directory Structure
 

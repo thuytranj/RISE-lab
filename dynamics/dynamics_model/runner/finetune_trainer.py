@@ -582,8 +582,7 @@ class Trainer:
                     # get the shape params
                     _, _, raw_frames, raw_height, raw_width = future_video.shape
                     
-                    # contain both mem frame, and future frame
-                    latent_frames = raw_frames // self.TEMPORAL_DOWN_RATIO + 1 + mem_size
+                    # latent_frames = raw_frames // self.TEMPORAL_DOWN_RATIO + 1 + mem_size
                     latent_height = raw_height // self.SPATIAL_DOWN_RATIO
                     latent_width = raw_width // self.SPATIAL_DOWN_RATIO
                     
@@ -601,6 +600,7 @@ class Trainer:
 
                     
                     latents = torch.cat((mem_latents, future_video_latents), dim=2)
+                    latent_frames = latents.shape[2]
 
                     video_attention_mask = None
                     latents = rearrange(latents, 'bv c f h w -> bv (f h w) c')

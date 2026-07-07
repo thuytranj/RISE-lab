@@ -12,6 +12,10 @@ import torch
 import torch.distributed as dist
 
 
+import transformers.utils
+if not hasattr(transformers.utils, "FLAX_WEIGHTS_NAME"):
+    transformers.utils.FLAX_WEIGHTS_NAME = "flax_model.msgpack"
+
 class Tee:
     def __init__(self, *files):
         self.files = files
@@ -22,6 +26,8 @@ class Tee:
     def flush(self):
         for f in self.files:
             f.flush()
+    def __getattr__(self, name):
+        return getattr(self.files[0], name)
 
 def init_logging(log_dir, rank):
 

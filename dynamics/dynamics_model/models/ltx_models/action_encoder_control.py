@@ -651,8 +651,9 @@ class LTXVideoTransformer3DModel(ModelMixin, ConfigMixin, FromOriginalModelMixin
         action_states = self.act_vit_in(action_tokens)
 
     
-        n_repeat = (128 + 26 - 1) // 26
-        action_states = action_states.repeat(1, n_repeat, 1)[:, :128, :]
+        seq_len = encoder_hidden_states.shape[1]
+        n_repeat = (seq_len + 26 - 1) // 26
+        action_states = action_states.repeat(1, n_repeat, 1)[:, :seq_len, :]
 
         encoder_hidden_states = encoder_hidden_states + action_states
 

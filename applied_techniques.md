@@ -61,6 +61,20 @@ Tài liệu này tổng hợp chi tiết các lỗi hệ thống, kỹ thuật s
       transformers.utils.FLAX_WEIGHTS_NAME = "flax_model.msgpack"
   ```
 
+### 2.3 Lỗi `sys.unraisablehook` và `exitcode: 120` khi kết thúc chương trình
+* **Triệu chứng:** Khi chương trình chạy xong hoặc kết thúc, PyTorch Distributed (`torchrun`) báo lỗi crash `ChildFailedError` với mã thoát `exitcode: 120`. Đồng thời xuất hiện log `Exception ignored in: sys.unraisablehook`.
+* **Nguyên nhân:** Do đối tượng ghi log tùy biến `Tee` ghi đè `sys.stdout` và `sys.stderr`. Khi trình thông dịch Python dọn dẹp tài nguyên để thoát (garbage collection), tệp `log_file` đã bị đóng trước bởi tiến trình `atexit`, nhưng các luồng hệ thống hoặc bản thân Python khi đóng luồng vẫn cố gọi hàm `flush()` hoặc `write()` trên `Tee` (vốn vẫn trỏ vào tệp `log_file` đã đóng). Việc này sinh ra lỗi I/O trên file đã đóng trong lúc thoát, khiến `torchrun` hiểu lầm là luồng chính gặp sự cố crash.
+* **Giải pháp:** Định nghĩa lại cơ chế khôi phục luồng chuẩn khi dọn dẹp để khôi phục lại stdout/stderr gốc trước khi đóng file log:
+  ```python
+  # Tệp: utils/__init__.py
+  def cleanup_logging():
+      sys.stdout = sys.__stdout__
+      sys.stderr = sys.__stderr__
+      log_file.close()
+
+  atexit.register(cleanup_logging)
+  ```
+
 ---
 
 ## 3. Tối Ưu Hóa Bộ Nhớ GPU (VRAM Optimizations)

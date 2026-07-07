@@ -36,7 +36,13 @@ def init_logging(log_dir, rank):
     log_filename = os.path.join(log_dir, f"log_rank{rank}_{now}.txt")
 
     log_file = open(log_filename, "w", buffering=1)
-    atexit.register(log_file.close)
+
+    def cleanup_logging():
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+        log_file.close()
+
+    atexit.register(cleanup_logging)
 
     sys.stdout = Tee(sys.__stdout__, log_file)
     sys.stderr = Tee(sys.__stderr__, log_file)

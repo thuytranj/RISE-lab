@@ -859,6 +859,7 @@ class Trainer:
         accelerator.end_training()
 
 
+    @torch.no_grad()
     def validate(self, accelerator, model_save_dir, global_step, n_view=1, n_chunk=30, image=None, prompt=None, cap=None, path=None, gt_actions=None, to_log=True):
 
         os.makedirs(model_save_dir,exist_ok=True)

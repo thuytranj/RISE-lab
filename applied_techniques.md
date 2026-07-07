@@ -95,3 +95,8 @@ Môi trường Kaggle GPU T4 có giới hạn VRAM rất khắt khe (~15GB). Do 
   1. Do các tác vụ trong robot datasets (`svla`, `aloha`) chỉ chứa một lượng rất ít các câu lệnh mô tả nhiệm vụ (captions) cố định lặp đi lặp lại qua các epoch, ta tiến hành lưu đệm ẩn (caching) các prompt embeddings đã tính toán thông qua một dictionary `self.prompt_cache`.
   2. Ở bước huấn luyện tiếp theo, nếu câu lệnh đã được tính toán trước đó, hệ thống sẽ lấy trực tiếp từ bộ đệm (mất **0.0 giây**) thay vì phải gọi lại mô hình T5 trên CPU.
 * **Kết quả:** Tốc độ huấn luyện tăng vọt **gấp 6 - 7 lần** (thời gian mỗi bước giảm từ 70.77s xuống còn **~8 - 12s**). Tổng thời gian train 600 bước giảm xuống chỉ còn **~1.5 giờ**, hoàn toàn dư dả thời gian để chạy đầy đủ Evaluation và 3 cấu hình của Benchmark trong cùng 1 phiên làm việc của Kaggle.
+
+### 3.6 Tắt tính toán Gradient khi Validation (Validation no_grad)
+* **Chi tiết:** Mặc định khi gọi đến hàm `self.validate` ở các bước 100, 200,... hệ thống sẽ thực hiện suy luận sinh video (inference) qua pipeline với 20 bước khử nhiễu (denoising steps). Do hàm này không được bọc trong `@torch.no_grad()`, PyTorch vẫn âm thầm theo dõi đồ thị tính toán đạo hàm (gradient tracking) cho toàn bộ 20 bước khử nhiễu của mô hình chính 2 Tỷ tham số. Việc này làm phình to bộ nhớ đồ họa một cách khủng khiếp và gây lỗi CUDA Out of Memory ngay lập tức ở bước số 100.
+* **Giải pháp:** Bổ sung decorator `@torch.no_grad()` cho phương thức `validate` trong `runner/finetune_trainer.py`.
+

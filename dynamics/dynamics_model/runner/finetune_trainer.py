@@ -310,10 +310,10 @@ class Trainer:
             load_weights=self.args.load_weights
         )
         self.tokenizer, text_encoder = cond_models["tokenizer"], cond_models["text_encoder"]
-        self.text_encoder = text_encoder.to(device, dtype=dtype).eval()
+        self.text_encoder = text_encoder.to("cpu", dtype=dtype).eval()
         self.text_uncond = get_text_conditions(self.tokenizer, self.text_encoder, prompt="")
-        self.uncond_prompt_embeds = self.text_uncond['prompt_embeds']
-        self.uncond_prompt_attention_mask = self.text_uncond['prompt_attention_mask']
+        self.uncond_prompt_embeds = self.text_uncond['prompt_embeds'].to(device)
+        self.uncond_prompt_attention_mask = self.text_uncond['prompt_attention_mask'].to(device)
 
         
 
@@ -608,9 +608,8 @@ class Trainer:
                     captions = batch['caption']
                     text_conds = get_text_conditions(self.tokenizer,self.text_encoder,captions)
                     
-                    prompt_embeds = text_conds['prompt_embeds']
-                    
-                    prompt_attention_mask = text_conds['prompt_attention_mask']
+                    prompt_embeds = text_conds['prompt_embeds'].to(self.uncond_prompt_embeds.device)
+                    prompt_attention_mask = text_conds['prompt_attention_mask'].to(self.uncond_prompt_attention_mask.device)
 
                     prompt_embeds = self.uncond_prompt_embeds.repeat(batch_size,1,1)*dropout_mask_prompt + \
                                     prompt_embeds*~dropout_mask_prompt

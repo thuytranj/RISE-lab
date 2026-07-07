@@ -131,6 +131,7 @@ class Trainer:
         self.unet = None
         self.vae = None
         self.scheduler = None
+        self.prompt_cache = {}
 
         self._init_distributed()
         self._init_logging()
@@ -606,10 +607,14 @@ class Trainer:
                     latents = rearrange(latents, 'bv c f h w -> bv (f h w) c')
 
                     captions = batch['caption']
-                    text_conds = get_text_conditions(self.tokenizer,self.text_encoder,captions)
-                    
-                    prompt_embeds = text_conds['prompt_embeds'].to(self.uncond_prompt_embeds.device)
-                    prompt_attention_mask = text_conds['prompt_attention_mask'].to(self.uncond_prompt_attention_mask.device)
+                    cache_key = tuple(captions)
+                    if cache_key in self.prompt_cache:
+                        prompt_embeds, prompt_attention_mask = self.prompt_cache[cache_key]
+                    else:
+                        text_conds = get_text_conditions(self.tokenizer, self.text_encoder, captions)
+                        prompt_embeds = text_conds['prompt_embeds'].to(self.uncond_prompt_embeds.device)
+                        prompt_attention_mask = text_conds['prompt_attention_mask'].to(self.uncond_prompt_attention_mask.device)
+                        self.prompt_cache[cache_key] = (prompt_embeds, prompt_attention_mask)
 
                     prompt_embeds = self.uncond_prompt_embeds.repeat(batch_size,1,1)*dropout_mask_prompt + \
                                     prompt_embeds*~dropout_mask_prompt

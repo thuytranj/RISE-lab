@@ -652,12 +652,13 @@ class LTXVideoTransformer3DModel(ModelMixin, ConfigMixin, FromOriginalModelMixin
 
     
         seq_len = encoder_hidden_states.shape[1]
-        n_repeat = (seq_len + 26 - 1) // 26
+        act_len = action_states.shape[1]
+        n_repeat = (seq_len + act_len - 1) // act_len
         action_states = action_states.repeat(1, n_repeat, 1)[:, :seq_len, :]
 
         encoder_hidden_states = encoder_hidden_states + action_states
 
-        encoder_attention_mask[:, :26] = True
+        encoder_attention_mask[:, :act_len] = True
 
         
         if return_video or store_buffer:

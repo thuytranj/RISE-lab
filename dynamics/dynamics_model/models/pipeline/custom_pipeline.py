@@ -698,7 +698,7 @@ class CustomPipeline(DiffusionPipeline, FromSingleFileMixin):
         self._attention_kwargs = attention_kwargs
         self._interrupt = False
 
-        device = self._execution_device
+        device = next(self.transformer.parameters()).device
 
         # 2. Define call parameters
         if prompt is not None and isinstance(prompt, str):

@@ -114,3 +114,12 @@ Môi trường Kaggle GPU T4 có giới hạn VRAM rất khắt khe (~15GB). Do 
 * **Chi tiết:** Mặc định khi gọi đến hàm `self.validate` ở các bước 100, 200,... hệ thống sẽ thực hiện suy luận sinh video (inference) qua pipeline với 20 bước khử nhiễu (denoising steps). Do hàm này không được bọc trong `@torch.no_grad()`, PyTorch vẫn âm thầm theo dõi đồ thị tính toán đạo hàm (gradient tracking) cho toàn bộ 20 bước khử nhiễu của mô hình chính 2 Tỷ tham số. Việc này làm phình to bộ nhớ đồ họa một cách khủng khiếp và gây lỗi CUDA Out of Memory ngay lập tức ở bước số 100.
 * **Giải pháp:** Bổ sung decorator `@torch.no_grad()` cho phương thức `validate` trong `runner/finetune_trainer.py`.
 
+### 3.7 Sửa lỗi phân bổ thiết bị (Device Mismatch) và Chặn chạy Validation/Save ở Step 0
+* **Chi tiết:** 
+  1. Khi Text Encoder được offload sang CPU, hàm xác định thiết bị thực thi ngầm định của pipeline (`self._execution_device`) nhận dạng nhầm thiết bị chính là CPU. Điều này dẫn tới việc ảnh đầu vào `image` bị chuyển sang CPU trong khi mô hình VAE và các mô hình con khác vẫn nằm trên GPU, gây lỗi crash `RuntimeError: Input type (CPUBFloat16Type) and weight type (CUDABFloat16Type) should be the same`.
+  2. Đồng thời, ở bước huấn luyện thứ 0 (`global_step = 0`), phép toán modulo `0 % steps_to_val` luôn bằng 0, kích hoạt chạy Validation ngay khi bắt đầu (gây crash lập tức trước cả khi mô hình kịp học).
+* **Giải pháp:** 
+  1. Thay đổi thiết bị mục tiêu của pipeline trong `models/pipeline/custom_pipeline.py` lấy trực tiếp từ thiết bị của mô hình Transformer chính (`next(self.transformer.parameters()).device`) vốn luôn nằm trên GPU.
+  2. Bổ sung điều kiện chốt chặn `global_step > 0` trong các câu lệnh kiểm tra chu kỳ chạy validation và lưu checkpoint tại `runner/finetune_trainer.py`.
+
+

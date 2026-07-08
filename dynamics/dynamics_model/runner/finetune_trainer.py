@@ -801,7 +801,7 @@ class Trainer:
                                 self.writer.add_scalar("Video loss", loss_video.item(), global_step)
                     accelerator.wait_for_everyone()
 
-                if global_step % self.args.steps_to_val == 0:
+                if global_step > 0 and global_step % self.args.steps_to_val == 0:
                     accelerator.wait_for_everyone()
                     if accelerator.is_main_process:
                         model_save_dir = os.path.join(self.save_folder,f'Validation_step_{global_step}')
@@ -809,7 +809,7 @@ class Trainer:
                     accelerator.wait_for_everyone()
 
                 
-                if global_step % self.args.steps_to_save == 0:
+                if global_step > 0 and global_step % self.args.steps_to_save == 0:
                     accelerator.wait_for_everyone()
                     if accelerator.is_main_process:
                         model_to_save = unwrap_model(accelerator, self.diffusion_model)

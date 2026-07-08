@@ -835,6 +835,9 @@ class Trainer:
             if accelerator.is_main_process and self.writer is not None:
                 avg_loss = running_loss / len(self.train_dataloader)
                 self.writer.add_scalar("Average Training Loss", avg_loss, epoch)
+
+            if global_step >= self.state.train_steps:
+                break
             
 
         accelerator.wait_for_everyone()

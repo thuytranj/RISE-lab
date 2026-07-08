@@ -122,4 +122,9 @@ Môi trường Kaggle GPU T4 có giới hạn VRAM rất khắt khe (~15GB). Do 
   1. Thay đổi thiết bị mục tiêu của pipeline trong `models/pipeline/custom_pipeline.py` lấy trực tiếp từ thiết bị của mô hình Transformer chính (`next(self.transformer.parameters()).device`) vốn luôn nằm trên GPU.
   2. Bổ sung điều kiện chốt chặn `global_step > 0` trong các câu lệnh kiểm tra chu kỳ chạy validation và lưu checkpoint tại `runner/finetune_trainer.py`.
 
+### 3.8 Sửa lỗi thoát vòng lặp huấn luyện lồng nhau (Nested Loop Break Bug)
+* **Chi tiết:** Khi chạm ngưỡng số bước tối đa `train_steps: 600`, lệnh `break` ở trong vòng lặp batch (vòng lặp con) được kích hoạt. Tuy nhiên, lệnh này chỉ giúp thoát khỏi epoch hiện tại. Sau đó chương trình vẫn đi tiếp vòng lặp epoch lớn (vòng lặp cha), chạy thêm 1 step ở epoch tiếp theo, chạm break tiếp, và tiếp tục lặp lại vô tận cho đến khi hết `train_epochs: 1000`. Điều này làm thanh tiến trình in ra `601it`, `602it`,... và không thể kết thúc huấn luyện sạch sẽ.
+* **Giải pháp:** Bổ sung điều kiện kiểm tra `if global_step >= self.state.train_steps: break` ở vòng lặp epoch ngoài cùng trong `runner/finetune_trainer.py` để thoát hoàn toàn cả 2 vòng lặp khi đủ số bước.
+
+
 
